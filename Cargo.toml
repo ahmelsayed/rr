@@ -1,0 +1,5 @@
+[package]
+
+name = "rr"
+version = "0.0.1"
+authors = ["Ahmed ElSayed <ahmels@microsoft.com>"]
