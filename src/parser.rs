@@ -2,32 +2,29 @@ use std::ascii::OwnedAsciiExt;
 
 pub enum Mode {
     Help,
+    Get,
+    Set,
     Delete,
-    DeleteList,
-    ShowList,
-    ShowAll,
-    Default
+    ShowAll
 }
 
-pub struct RrOptions<'r> {
+pub struct RrOptions {
     pub mode: Mode,
-    pub list: Option<&'r str>,
-    pub key: Option<&'r str>,
-    pub value: Option<&'r str>
+    pub key: Box<Option<String>>,
+    pub value: Box<Option<String>>
 }
 
-impl<'r> RrOptions<'r> {
-    fn new() -> RrOptions<'r> {
+impl RrOptions {
+    fn new() -> RrOptions {
         RrOptions{
-            mode: Default,
-            list: None,
-            key: None,
-            value: None
+            mode: Help,
+            key: box None,
+            value: box None
         }
     }
 }
 
-pub fn parse<'r> (args: Vec<String>) -> RrOptions<'r> {
+pub fn parse (args: Vec<String>) -> RrOptions {
     let mut rr_options = RrOptions::new();
 
     // - 1 becaust the args include the binary name, they are always >= 1
@@ -35,27 +32,29 @@ pub fn parse<'r> (args: Vec<String>) -> RrOptions<'r> {
 
         1 => {
             match args[1].clone().into_ascii_lower().as_slice() {
-                "?" => rr_options.mode = Help,
-                "showall" => rr_options.mode = ShowAll,
-                _ => rr_options.mode = Default
+                "?" | "help" => rr_options.mode = Help,
+                "all" => rr_options.mode = ShowAll,
+                _ => {
+                    rr_options.mode = Get;
+                    rr_options.key = box Some(args[1].clone().into_ascii_lower());
+                }
             }
         },
 
         2 => {
             match args[1].clone().into_ascii_lower().as_slice() {
-                "delete" => rr_options.mode = Delete,
-                "deletelist" => rr_options.mode = DeleteList,
-                "showlist" => rr_options.mode = ShowList,
-                _ => rr_options.mode = Default
+                "delete" => {
+                    rr_options.mode = Delete;
+                    rr_options.key = box Some(args[2].clone().into_ascii_lower());
+                },
+                _ => {
+                    rr_options.mode = Set;
+                    rr_options.key = box Some(args[1].clone().into_ascii_lower());
+                    rr_options.value = box Some(args[2].clone().into_ascii_lower());
+                }
             }
         },
 
-        3 => {
-            match args[1].clone().into_ascii_lower().as_slice() {
-                "delete" => rr_options.mode = Delete,
-                _ => rr_options.mode = Default
-            }
-        },
         _ => rr_options.mode = Help
     }
 
